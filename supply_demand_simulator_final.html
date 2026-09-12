@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Supply & Demand Simulator</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;font-family:Arial,sans-serif;background:#f4f6f8;color:#222}
+.container{max-width:1050px;margin:25px auto;padding:20px}
+.card{background:#fff;border-radius:12px;padding:20px;margin:18px 0;box-shadow:0 3px 12px rgba(0,0,0,.08)}
+h1{margin:0 0 5px}.sub{color:#666;margin-top:0}
+.market{overflow-x:auto}
+#graph{display:block;width:100%;min-width:650px;height:auto;border:1px solid #ddd;border-radius:8px;background:#fff}
+.controls{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.box{border:1px solid #ddd;border-radius:10px;padding:15px}
+label{font-weight:bold;display:block;margin-bottom:8px}
+input{width:100%}
+button{background:#222;color:white;border:0;border-radius:8px;padding:10px 16px;cursor:pointer}
+.stats{display:flex;gap:12px;flex-wrap:wrap;margin-top:15px}
+.stat{flex:1;min-width:150px;background:#f1f3f5;padding:13px;border-radius:9px}
+.stat strong{display:block;font-size:20px;margin-top:4px}
+@media(max-width:700px){.controls{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="container">
+<h1>Supply & Demand Simulator</h1>
+<p class="sub">Explore demand, supply and market equilibrium.</p>
+
+<div class="card market">
+<h2>Interactive Market</h2>
+
+<!-- The graph is drawn here in plain SVG, so it is visible even in basic file previews. -->
+<svg id="graph" viewBox="0 0 900 500" xmlns="http://www.w3.org/2000/svg">
+<rect width="900" height="500" fill="#fff"/>
+<!-- grid -->
+<g stroke="#e5e5e5" stroke-width="1">
+<path d="M90 60V440M165 60V440M240 60V440M315 60V440M390 60V440M465 60V440M540 60V440M615 60V440M690 60V440M765 60V440M840 60V440"/>
+<path d="M90 440H840M90 402H840M90 364H840M90 326H840M90 288H840M90 250H840M90 212H840M90 174H840M90 136H840M90 98H840M90 60H840"/>
+</g>
+<!-- axes -->
+<path d="M90 60V440H840" fill="none" stroke="#222" stroke-width="2"/>
+<text x="30" y="70" font-size="16">Price</text>
+<text x="790" y="485" font-size="16">Quantity</text>
+<!-- tick labels -->
+<g font-size="12" fill="#222" text-anchor="middle">
+<text x="90" y="460">0</text><text x="165" y="460">10</text><text x="240" y="460">20</text><text x="315" y="460">30</text><text x="390" y="460">40</text><text x="465" y="460">50</text><text x="540" y="460">60</text><text x="615" y="460">70</text><text x="690" y="460">80</text><text x="765" y="460">90</text><text x="840" y="460">100</text>
+</g>
+<g font-size="12" fill="#222" text-anchor="end">
+<text x="72" y="444">0</text><text x="72" y="406">10</text><text x="72" y="368">20</text><text x="72" y="330">30</text><text x="72" y="292">40</text><text x="72" y="254">50</text><text x="72" y="216">60</text><text x="72" y="178">70</text><text x="72" y="140">80</text><text x="72" y="102">90</text><text x="72" y="64">100</text>
+</g>
+
+<!-- Demand: downward sloping -->
+<path id="demandCurve" d="M90 60 L840 440" fill="none" stroke="#2563eb" stroke-width="5"/>
+<!-- Supply: upward sloping -->
+<path id="supplyCurve" d="M90 440 L840 60" fill="none" stroke="#dc2626" stroke-width="5"/>
+<!-- equilibrium -->
+<circle id="eqPoint" cx="465" cy="250" r="7" fill="#111"/>
+<text id="eqLabel" x="480" y="240" font-size="14">Equilibrium</text>
+<!-- market price -->
+<line id="priceLine" x1="90" y1="250" x2="840" y2="250" stroke="#555" stroke-width="2" stroke-dasharray="8 6"/>
+<circle id="qdPoint" cx="465" cy="250" r="6" fill="#2563eb"/>
+<circle id="qsPoint" cx="465" cy="250" r="6" fill="#dc2626"/>
+<text x="105" y="42" font-size="15" fill="#2563eb">Demand</text>
+<text x="185" y="42" font-size="15" fill="#dc2626">Supply</text>
+<text x="270" y="42" font-size="15" fill="#555">Market Price</text>
+</svg>
+
+<div class="stats">
+<div class="stat">Equilibrium Price<strong id="eqP">50.0</strong></div>
+<div class="stat">Equilibrium Quantity<strong id="eqQ">50.0</strong></div>
+<div class="stat">Market Status<strong id="status">Equilibrium</strong></div>
+</div>
+</div>
+
+<div class="card controls">
+<div class="box">
+<h3>Demand Curve</h3>
+<label>Demand Shift: <span id="dText">0</span></label>
+<input id="d" type="range" min="-25" max="25" value="0">
+<p>Increase → demand shifts right.<br>Decrease → demand shifts left.</p>
+</div>
+<div class="box">
+<h3>Supply Curve</h3>
+<label>Supply Shift: <span id="sText">0</span></label>
+<input id="s" type="range" min="-25" max="25" value="0">
+<p>Increase → supply shifts right.<br>Decrease → supply shifts left.</p>
+</div>
+<div class="box">
+<h3>Market Price</h3>
+<label>Price: <span id="pText">50</span></label>
+<input id="p" type="range" min="10" max="90" value="50">
+<p>A price change creates movement along the curves.</p>
+</div>
+<div class="box">
+<h3>Reset</h3>
+<p>Return everything to the original equilibrium.</p>
+<button onclick="resetSim()">Reset Simulator</button>
+</div>
+</div>
+
+<div class="card">
+<h2>Supply & Demand Characteristics</h2>
+<p><b>Demand:</b> The demand curve slopes downward. As price increases, quantity demanded generally decreases.</p>
+<p><b>Supply:</b> The supply curve slopes upward. As price increases, quantity supplied generally increases.</p>
+<p><b>Equilibrium:</b> The market is in equilibrium where quantity demanded equals quantity supplied.</p>
+<p><b>Curve shifts:</b> Non-price factors shift the entire curve, while a change in the good's own price creates movement along a curve.</p>
+</div>
+</div>
+
+<script>
+const d=document.getElementById("d"),s=document.getElementById("s"),p=document.getElementById("p");
+const demandCurve=document.getElementById("demandCurve"), supplyCurve=document.getElementById("supplyCurve");
+const eqPoint=document.getElementById("eqPoint"),eqLabel=document.getElementById("eqLabel");
+const priceLine=document.getElementById("priceLine"),qdPoint=document.getElementById("qdPoint"),qsPoint=document.getElementById("qsPoint");
+
+function X(q){return 90+q*7.5}
+function Y(v){return 440-v*3.8}
+
+function curvePath(fn){
+ let path="";
+ for(let price=0;price<=100;price++){
+   const q=Math.max(0,Math.min(100,fn(price)));
+   path+=(price===0?"M":"L")+X(q).toFixed(1)+" "+Y(price).toFixed(1)+" ";
+ }
+ return path;
+}
+
+function draw(){
+ const ds=Number(d.value),ss=Number(s.value),price=Number(p.value);
+ document.getElementById("dText").textContent=ds>0?"+"+ds:ds;
+ document.getElementById("sText").textContent=ss>0?"+"+ss:ss;
+ document.getElementById("pText").textContent=price;
+
+ const Qd=price=>100+ds-price;
+ const Qs=price=>price+ss;
+ const eqPrice=(100+ds-ss)/2;
+ const eqQty=eqPrice+ss;
+ const qd=Math.max(0,Math.min(100,Qd(price)));
+ const qs=Math.max(0,Math.min(100,Qs(price)));
+
+ demandCurve.setAttribute("d",curvePath(Qd));
+ supplyCurve.setAttribute("d",curvePath(Qs));
+
+ if(eqPrice>=0&&eqPrice<=100&&eqQty>=0&&eqQty<=100){
+   eqPoint.setAttribute("cx",X(eqQty)); eqPoint.setAttribute("cy",Y(eqPrice));
+   eqLabel.setAttribute("x",X(eqQty)+14); eqLabel.setAttribute("y",Y(eqPrice)-10);
+ }
+ priceLine.setAttribute("y1",Y(price));priceLine.setAttribute("y2",Y(price));
+ qdPoint.setAttribute("cx",X(qd));qdPoint.setAttribute("cy",Y(price));
+ qsPoint.setAttribute("cx",X(qs));qsPoint.setAttribute("cy",Y(price));
+
+ document.getElementById("eqP").textContent=eqPrice.toFixed(1);
+ document.getElementById("eqQ").textContent=Math.max(0,eqQty).toFixed(1);
+ document.getElementById("status").textContent=qd>qs+0.5?"Shortage":qs>qd+0.5?"Surplus":"Equilibrium";
+}
+[d,s,p].forEach(e=>e.addEventListener("input",draw));
+function resetSim(){d.value=0;s.value=0;p.value=50;draw()}
+draw();
+</script>
+</body>
+</html>
